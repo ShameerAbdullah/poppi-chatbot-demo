@@ -36,6 +36,7 @@ sql
 4. Make sure to generate a single snowflake sql code, not multiple. 
 5. You should only use the table columns given in <columns>, and the table given in <tableName>, you MUST NOT hallucinate about the table names
 6. DO NOT put numerical at the very front of sql variable.
+7. Whenever you refer to a table, always refer to it in this manner Core.Analytics.<tableName>
 </rules>
 
 Don't forget to use "ilike %keyword%" for fuzzy match queries (especially for variable_name column)
