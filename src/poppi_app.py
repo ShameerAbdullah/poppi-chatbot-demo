@@ -44,11 +44,21 @@ if st.session_state.messages[-1]["role"] != "assistant":
         sql_match = re.search(r"```sql\n(.*)\n```", response, re.DOTALL)
         if sql_match:
             sql = sql_match.group(1)
-            conn = st.connection("snowflake")
-            
-            # Query the Snowflake connection using the parsed SQL
-            results = conn.query(sql)
-            message["results"] = results
-            st.dataframe(results)  # Display the results in the Streamlit app
+            try:
+                # Establish connection
+                conn = st.connection("snowflake")
+
+                # Execute the SQL query
+                results = conn.query(sql)
+
+                # Ensure the results are added to the message and displayed
+                if results is not None:
+                    message["results"] = results
+                    st.dataframe(results)  # Display the results in the Streamlit app
+                else:
+                    st.warning("Query executed, but no results returned.")
+
+            except Exception as e:
+                st.error(f"An error occurred while executing the query: {str(e)}")
 
         st.session_state.messages.append(message)

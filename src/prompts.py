@@ -1,11 +1,17 @@
 import streamlit as st
 
 SCHEMA_PATH = st.secrets.get("SCHEMA_PATH", "Core.Analytics")
-QUALIFIED_TABLE_NAME = f"{SCHEMA_PATH}.V_BI_RETAIL_OFFTAKE_AGGR_SALES"
-TABLE_DESCRIPTION = """
-This table contains sales and store-related data, including information on quantities, revenue, product codes, and geographical details such as city, state, and ZIP code.
-It is designed to support retail analytics by linking sales metrics with reporting dates and store identifiers.
-"""
+
+QUALIFIED_TABLE_NAME_LIST = [f"{SCHEMA_PATH}.V_BI_RETAIL_SALES_AGGR",f"{SCHEMA_PATH}.VOIDS"]
+#QUALIFIED_TABLE_NAME = f"{SCHEMA_PATH}.V_BI_RETAIL_SALES_AGGR"
+
+TABLE_DESCRIPTION_LIST = ["""This table contains sales and store-related data, including information on quantities, revenue, product codes, and geographical details such as city, state, and ZIP code. It is designed to support retail analytics by linking sales metrics with reporting dates and store identifiers.""",""" This table consists information for Plannograms and Voids, Plannogram which is the products that should be sold at a particular retail chain and store, Voids are products that have not been sold on a particular store for more than 14 days. Any product that is a void has a void status as 1. This table is used to monitor voids from time to time. """]
+
+# TABLE_DESCRIPTION = """
+# This table contains sales and store-related data, including information on quantities, revenue, product codes, and geographical details such as city, state, and ZIP code.
+# It is designed to support retail analytics by linking sales metrics with reporting dates and store identifiers.
+# """
+
 # This query is optional if running Poppi on your own table, especially a wide table.
 # Since this is a deep table, it's useful to tell Poppi what variables are available.
 # If altering, you may also need to modify the formatting logic in get_table_context() below.
@@ -14,7 +20,7 @@ GEN_SQL = """
 You will be acting as an AI Snowflake SQL Expert named Poppi.
 Your goal is to give correct, executable sql query to users.
 You will be replying to users who will be confused if you don't respond in the character of Poppi.
-You are given one table, the table name is in <tableName> tag, the columns are in <columns> tag.
+You are given multiple table, the table name is in <tableName> tag, the columns are in <columns> tag.
 The user will ask questions, for each question you should respond and include a sql query based on the question and the table. 
 
 {context}
@@ -41,7 +47,7 @@ sql
 
 For each question from the user, make sure to include a query in your response.
 
-Now to get started, please briefly introduce yourself, describe the table at a high level, and share the available metrics in 2-3 sentences.
+Now to get started, please briefly introduce yourself, describe both the tables at a high level, and share the available metrics in 2-3 sentences.
 Then provide 3 example questions using bullet points.
 """
 
@@ -61,7 +67,7 @@ def get_table_context(table_name: str, table_description: str):
         ]
     )
     context = f"""
-Here is the table name <tableName> {'.'.join(table)} </tableName>
+Here is the first table name <tableName> {'.'.join(table)} </tableName>
 
 <tableDescription>{table_description}</tableDescription>
 
@@ -71,12 +77,18 @@ Here are the columns of the {'.'.join(table)}
     """
     return context
 
+
 def get_system_prompt():
-    table_context = get_table_context(
-        table_name=QUALIFIED_TABLE_NAME,
-        table_description=TABLE_DESCRIPTION
-    )
-    return GEN_SQL.format(context=table_context)
+    table_context = []
+    for i in range(2):
+        table_context.append(get_table_context(
+            table_name=QUALIFIED_TABLE_NAME_LIST[i],
+            table_description=TABLE_DESCRIPTION_LIST[i]   
+        ))
+        
+    final_context=table_context[0]+"\n\n\nThis is the second table: "+table_context[1]
+    
+    return GEN_SQL.format(context=final_context)
 
 # do streamlit run prompts.py to view the initial system prompt in a Streamlit app
 if __name__ == "__main__":
