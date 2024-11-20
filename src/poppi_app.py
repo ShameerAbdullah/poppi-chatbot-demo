@@ -47,10 +47,8 @@ if st.session_state.messages[-1]["role"] != "assistant":
             try:
                 # Establish connection
                 conn = st.connection("snowflake")
-
                 # Execute the SQL query
                 results = conn.query(sql)
-
                 # Ensure the results are added to the message and displayed
                 if results is not None:
                     message["results"] = results
